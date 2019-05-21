@@ -1,0 +1,16 @@
+C:\Users\SergeevMV\Desktop\C#\ServerPionWPF\ServerPionWPF\bin\Debug\ServerPionWPF.exe.config
+C:\Users\SergeevMV\Desktop\C#\ServerPionWPF\ServerPionWPF\bin\Debug\ServerPionWPF.exe
+C:\Users\SergeevMV\Desktop\C#\ServerPionWPF\ServerPionWPF\bin\Debug\ServerPionWPF.pdb
+C:\Users\SergeevMV\Desktop\C#\ServerPionWPF\ServerPionWPF\obj\Debug\MainWindow.baml
+C:\Users\SergeevMV\Desktop\C#\ServerPionWPF\ServerPionWPF\obj\Debug\MainWindow.g.cs
+C:\Users\SergeevMV\Desktop\C#\ServerPionWPF\ServerPionWPF\obj\Debug\App.g.cs
+C:\Users\SergeevMV\Desktop\C#\ServerPionWPF\ServerPionWPF\obj\Debug\ServerPionWPF_MarkupCompile.cache
+C:\Users\SergeevMV\Desktop\C#\ServerPionWPF\ServerPionWPF\obj\Debug\ServerPionWPF.g.resources
+C:\Users\SergeevMV\Desktop\C#\ServerPionWPF\ServerPionWPF\obj\Debug\ServerPionWPF.Properties.Resources.resources
+C:\Users\SergeevMV\Desktop\C#\ServerPionWPF\ServerPionWPF\obj\Debug\ServerPionWPF.csproj.GenerateResource.Cache
+C:\Users\SergeevMV\Desktop\C#\ServerPionWPF\ServerPionWPF\obj\Debug\ServerPionWPF.exe
+C:\Users\SergeevMV\Desktop\C#\ServerPionWPF\ServerPionWPF\obj\Debug\ServerPionWPF.pdb
+C:\Users\SergeevMV\Desktop\C#\ServerPionWPF\ServerPionWPF\obj\Debug\ServerPionWPF.csprojResolveAssemblyReference.cache
+D:\Work_Code\C#\ServerPionWPF\ServerPionWPF\bin\Debug\ServerPionWPF.exe.config
+D:\Work_Code\C#\ServerPionWPF\ServerPionWPF\obj\Debug\ServerPionWPF.exe
+D:\Work_Code\C#\ServerPionWPF\ServerPionWPF\obj\Debug\ServerPionWPF.pdb

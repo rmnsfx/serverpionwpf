@@ -1,0 +1,763 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Navigation;
+using System.Windows.Shapes;
+using System.Data.SqlClient;
+using System.Data;
+using System.Globalization;
+using System.IO;
+
+
+
+namespace ServerPionWPF
+{
+    /// <summary>
+    /// Логика взаимодействия для MainWindow.xaml
+    /// </summary>
+    public partial class MainWindow : Window
+    {
+
+        List<Objects> globalPoints = new List<Objects>();
+        string listboxPath = null;
+      
+
+        public MainWindow()
+        {
+            InitializeComponent();
+
+            try
+            {
+                List<Objects> objdata = LoadDB();
+                TreeViewItem treeItem = null;
+                TreeViewItem treeItem2 = new TreeViewItem();
+                PopulateTree(treeItem, objdata);
+                               
+                
+            }
+            
+            catch
+            {
+                MessageBox.Show("Нет связи с сервером!");
+            }
+
+            
+        }
+
+
+
+
+
+
+
+
+        void WalkDownLogicalTree(object current)
+        {
+            //DoSomethingWithObjectInLogicalTree(current);
+
+            // The logical tree can contain any type of object, not just 
+            // instances of DependencyObject subclasses.  LogicalTreeHelper
+            // only works with DependencyObject subclasses, so we must be
+            // sure that we do not pass it an object of the wrong type.
+            DependencyObject depObj = current as DependencyObject;
+
+            if (depObj != null)
+                foreach (object logicalChild in LogicalTreeHelper.GetChildren(depObj))
+                {
+                    WalkDownLogicalTree(logicalChild);
+                    if (logicalChild == 0) MessageBox.Show(Convert.ToString(logicalChild));
+                }
+        }
+
+
+
+        ///////////////////////////////////////////////////////////////////////////////////////////////
+
+        public class Objects
+        {
+            public Guid ObjectID { get; set; }
+            public String Name { get; set; }            
+            public String TagName { get; set; }
+            public Guid ParentID { get; set; }
+        }
+
+        public class SampleList
+        {
+            public DateTime Date { get; set; }
+            public String Path { get; set; }
+            public String Name { get; set; }
+            public Guid SampleID { get; set; }
+            public Guid ObjectID { get; set; }
+            public double[] Sample { get; set; }
+            
+        }
+
+
+        public static List<Objects> LoadDB()
+        {
+            List<Objects> objdata = new List<Objects>();
+
+            //string connetionString = "Data Source=192.168.0.234; Initial Catalog=VS; User ID=sa; Password=flvby_ctnb";
+            string connetionString = "Data Source=192.168.5.140; Initial Catalog=VS; User ID=sa; Password=123;";
+
+            SqlConnection connection = new SqlConnection(connetionString);            
+            connection.Open();
+            SqlCommand command = new SqlCommand("SELECT * FROM [Objects]", connection);
+            SqlDataReader dataReader = command.ExecuteReader();
+
+
+            while (dataReader.Read())
+            {
+                Objects f = new Objects();
+
+                f.ObjectID = (Guid)dataReader["ObjectID"];
+                f.Name = (String)dataReader["Name"];
+                f.TagName = (String)dataReader["TagName"];
+                f.ParentID = (Guid)dataReader["ParentID"];
+
+                objdata.Add(f);
+            }
+
+            connection.Close();
+
+            return objdata;
+        }
+        
+
+        //public void PopulateTree(TreeViewItem root, List<Objects> objdata)
+        public TreeViewItem PopulateTree(TreeViewItem root, List<Objects> objdata)
+        {
+            Guid gRoot = new Guid("00000000-0000-0000-0000-000000000000");
+
+            if (root == null)
+            {
+                root = new TreeViewItem();
+                root.Header = "Объекты";
+                root.IsExpanded = true;
+                root.Tag = null;
+
+                var details = objdata.Where(t => t.ParentID.Equals(gRoot));
+
+                foreach (var detail in details)
+                {
+                    var child = new TreeViewItem()
+                    {
+                        Header = detail.Name.ToString(),
+                        Tag = detail.ObjectID.ToString()
+                    };
+
+                   
+                    root.Items.Add(child);
+                    PopulateTree(child, objdata);
+
+                }
+
+                ObjTree.Items.Add(root);
+
+            }
+
+            else
+            {
+
+                Guid g = new Guid(root.Tag.ToString());
+
+                var details = objdata.Where(t => t.ParentID.Equals(g));
+
+                foreach (var detail in details)
+                {
+                    var child = new TreeViewItem()
+                    {
+                        Header = detail.Name.ToString(),
+                        Tag = detail.ObjectID.ToString()
+
+                    };
+
+                    PopulateTree(child, objdata);
+                    root.Items.Add(child);
+
+                    //Добавляем контекстное меню
+
+                    //if (child.Header.ToString().Contains("Ось"))                    
+                    //{
+                    //    ContextMenu menu = new ContextMenu();
+                    //    MenuItem item1 = new MenuItem();
+                    //    item1.Header = "Добавить точку в маршрут";
+                    //    item1.Click += ContextMenu_click; 
+                    //    Thickness m = item1.Margin;
+                    //    m.Left = 10;
+                    //    item1.Margin = m;
+                    //    menu.Items.Add(item1);
+                    //    child.ContextMenu = menu;
+                    //}
+
+                }
+
+                WalkDownLogicalTree(root);
+            }
+
+            return root;
+        }
+
+
+        public void contextMenu(TreeViewItem root)
+        {
+
+            root = new TreeViewItem();
+
+            int totalElementcount = VisualTreeHelper.GetChildrenCount(root);
+
+            for (int i = 0; i < totalElementcount; i++)
+            {
+                if (VisualTreeHelper.GetChild(root, i) == null)
+                {
+                    /*ContextMenu menu = new ContextMenu();
+                    MenuItem item1 = new MenuItem();
+                    item1.Header = "Добавить точку в маршрут";
+                    item1.Click += ContextMenu_click;
+                    Thickness m = item1.Margin;
+                    m.Left = 10;
+                    item1.Margin = m;
+                    menu.Items.Add(item1);
+                    root.ContextMenu = menu;*/
+
+
+                }
+
+                MessageBox.Show(Convert.ToString(totalElementcount));
+            }
+        }
+        
+
+
+        public void ContextMenu_click(object sender, RoutedEventArgs e)
+        {
+
+            TreeViewItem item = ObjTree.SelectedItem as TreeViewItem;
+            TreeViewItem parent = ObjTree.SelectedItem as TreeViewItem;
+            TreeViewItem parent2 = (TreeViewItem) parent.Parent; 
+
+            textBox1.Text += Convert.ToString( parent2.Header + " \\ " + item.Header + Environment.NewLine);            
+
+            Guid oid = new Guid(Convert.ToString(item.Tag));             
+
+            globalPoints.Add(new Objects() { Name = (string) item.Header, ObjectID = oid });              
+        }
+
+
+       
+        ///////////////////////////////////////////////////////////////////////////////////////////////
+
+        /*private void BindTree(IEnumerable<Objects> list, TreeViewItem parentNode)
+        {
+
+            Guid gRoot = new Guid("00000000-0000-0000-0000-000000000000");
+
+            var nodes = list.Where(x => parentNode == null); //? x.ParentID.Equals(gRoot) : x.ParentID == int.Parse(parentNode.Value)
+            
+            foreach (var node in nodes)
+            {
+                TreeViewItem newNode = new TreeViewItem() { Header = node.Name.ToString() };
+
+                if (parentNode == null)
+                {
+                    ObjTree.Items.Add(newNode);
+                }
+                else
+                {
+                     ObjTree.Items.Add(newNode);
+                }
+                BindTree(list, newNode);
+            }
+        }*/
+
+
+
+
+        ///////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+        public static string getPath()
+        {
+            string path = null;
+
+            DriveInfo[] allDrives = DriveInfo.GetDrives();
+            foreach (DriveInfo d in allDrives)
+
+                if (d.VolumeLabel == "PION-3") path = d.Name;
+            
+            if (path == null)
+            {
+                //MessageBox.Show("Проверьте подключение c PION!");
+                //Environment.Exit(0);
+            }
+
+            return path;
+        }
+
+        
+
+
+        public static int getIndex()
+        {
+
+            int index = 0;
+            int maxindex = 0;
+            int i = 0;
+
+            string path = null;
+
+            string[] masroad1 = new string[1000];
+            string[] masroad2 = new string[1000];
+            
+            path = getPath();
+
+            DirectoryInfo DI = new System.IO.DirectoryInfo(path);
+
+
+            foreach (var file in DI.GetFiles())
+            {
+                if (file.FullName.Length > 10)
+                {
+                    masroad1[i] = file.FullName;
+                    masroad2[i] = masroad1[i].Substring(8, 3);
+
+                    i++;
+                }
+                else i++;
+
+            }
+
+            for (int j = 0; j < 1000; j++)
+            {
+                Int32.TryParse(masroad2[j], out index);
+
+                if (index > maxindex) maxindex = index;
+
+            }
+            
+            return maxindex + 1;
+        }
+
+
+
+        public static void saveRoad(List<Objects> Points)        
+        {
+
+            string path = null;
+            string log = null;
+            DateTime date = DateTime.Now;
+            int index = 0; //Индекс маршрута (число в расширении)
+
+            try
+            {
+                path = getPath();
+                index = getIndex();
+            }   
+    
+            catch
+            {
+                MessageBox.Show("Проверьте подключение c PION!");
+                return;
+            }
+
+            string s = null; // Содержимое Road.***
+            string s1 = null; // Маршрут
+            string s2 = null; // Точки
+            string s3 = null; // Закрывашка                       
+
+
+            //Маршрут без MAP
+            s1 = "Маршрут " + index.ToString("000");
+            for (int j = s1.Length; j < 16; j++) if (j == 15) s1 += Convert.ToString((char)index); else s1 += " ";
+            s += s1;
+
+            log = s1 + Environment.NewLine;
+
+            //Точки без MAP
+            int p = 1; // Счетчик точек
+            foreach (Objects pint in Points)
+                {
+                    string spint = null;
+                    if (pint.Name.Length > 6) spint = pint.Name.Substring(0, 6);
+                    else spint = pint.Name;
+                    s2 = "Точка " + p + "_" + spint;
+                    for (int w = s2.Length; w < 16; w++) if (w == 15) s2 += Convert.ToString((char)(p)); else s2 += " ";
+                    s += s2;
+                    
+                    log += "Signal " + p + "_" + spint + Environment.NewLine + pint.ObjectID + Environment.NewLine;
+
+                    p++;
+                }            
+
+
+            //Закрываем маршрут
+            for (int j = 0; j < 16; j++) if (j == 15) s3 += Convert.ToString((char) 0); else s3 += " "; 
+            s3 += Convert.ToString((char)0);
+            s += s3;
+
+            log += "Дата: " + date + (char)0;
+
+            
+
+            StreamWriter stream2 = new StreamWriter(new FileStream(path + "Road." + index.ToString("000"), FileMode.Create, FileAccess.Write), Encoding.Default);
+            stream2.Write(s);
+            stream2.Close();
+
+            MessageBox.Show("Маршрут " + "Road." + index.ToString("000") + " экспортирован в PION");
+
+            StreamWriter stream3 = new StreamWriter(new FileStream(path + "Map_" + index.ToString("000") + ".dat", FileMode.Create, FileAccess.Write), Encoding.Default);
+            stream3.Write(log);
+            stream3.Close();
+
+        }
+
+        public static List<SampleList> refreshSample()
+        {
+            List<SampleList> sample = new List<SampleList>();
+
+            string path = getPath();
+
+            DateTime date = DateTime.Now;
+
+            string[] directory = Directory.GetDirectories(path); //Считываем имена директорий
+
+            for (int i = 0; i < directory.Length; i++) //Перебираем директории
+            {
+                string[] directoryEntries = Directory.GetFiles(directory[i]); //Читаем имена файлов в текущей директории                
+
+                    for (int j = 0; j < directoryEntries.Length; j++) // Перебираем файлы внутри дирректории                                                    
+                    {
+                        //Читаем DATE.DAT
+                        if (directoryEntries[j].Contains("DATE.DAT"))
+                        {
+                            SampleList sampleList = new SampleList();
+                            
+                            StreamReader file = new StreamReader(directoryEntries[j]);
+                            string datetemp = file.ReadLine();
+                            DateTime.TryParseExact(datetemp, "yyyy/M/d_H:m", CultureInfo.InvariantCulture, DateTimeStyles.None, out date);
+
+                            sampleList.Date = date;
+                            sampleList.Path = directory[i];
+                            sample.Add(sampleList);
+                        }
+                    }
+
+                    //MessageBox.Show(Convert.ToString(directory[i]));
+
+             }            
+
+                return sample;            
+        }
+        
+
+
+        //Читаем выборку из PIONа        
+        public List<SampleList> importSample(string path)        
+        {
+            List<SampleList> outList = new List<SampleList>();
+            
+            DateTime date = DateTime.Now;
+            //byte[] temp = new byte[100000];
+            short[] value = new short[25000];
+            double[] value2 = new double[25000];                        
+            string directory = path; //Считываем имена директорий
+            string pathtoindex = null;
+            string pathtoindexfull = null;
+            string objid = null;
+            Guid tempobjid;
+            string pointindex = null;
+            string[] sarray = new string[1000];             
+            bool maperror = false;
+            string[] maptostring = null; 
+            Guid MeasureUnitID = new Guid("BF8AA2CD-85F1-451A-BF3C-54B707C07671"); // м/с2
+            int SamplePeriod = 25; //25 кГц
+            int DataType = 3;
+            string Diagnos = "";
+            string log = null;
+
+            
+            
+            if (path == null)
+            {
+                MessageBox.Show("Необходимо выбрать выборку!");
+                return outList;
+            }
+
+            pathtoindex = path.Substring(3, 3); //Извлекаем индекс из выбранной строки в листбоксе
+            pathtoindexfull = path.Substring(3, 7); //Извлекаем индекс из выбранной строки в листбоксе
+
+            //Проверка Export.log на повторный импорт
+            if (File.Exists(path + "Export_" + pathtoindexfull + ".log")) 
+            {
+                MessageBox.Show("Импорт выборки уже был произведен!");
+                return outList;
+            }
+            
+
+            try //Ловим отсутствие Map 
+            {
+                maptostring = File.ReadAllLines(getPath() + "Map_" + pathtoindex + ".dat"); //Map в массив 
+            }
+
+            catch { maperror = true; }
+
+                        
+            
+            string[] directoryEntries = Directory.GetFiles(path); //Читаем имена файлов в текущей директории
+            Array.Sort(directoryEntries); // Сортируем
+            
+            for (int j = 0; j < directoryEntries.Length; j++) //Перебираем файлы внутри дирректории                                                    
+            {
+
+                //Читаем DATE.DAT
+                if (directoryEntries[j].Contains("DATE.DAT"))
+                {
+                    StreamReader file = new StreamReader(directoryEntries[j]);
+                    string datetemp = file.ReadLine();
+                    //date = datetemp;
+                    DateTime.TryParseExact(datetemp, "yyyy/M/d_H:m", CultureInfo.InvariantCulture, DateTimeStyles.None, out date);
+                }
+
+                //Читаем SIGNAL*.DAT
+                if (directoryEntries[j].Contains("Signal"))
+                {
+                    FileStream file = new FileStream(directoryEntries[j], FileMode.Open);
+                    //for (int j = 0; j < 4; j++) temp[j] = (byte)file2.ReadByte();
+                    for (int d = 0; d < 25000; d++) value[d] = (short)((file.ReadByte() + file.ReadByte() * 256));
+                    for (int e = 0; e < 25000; e++) value2[e] = (double)(value[e] / 300.0);
+                    file.Close();                    
+
+                    SampleList sampleList = new SampleList();
+                    sampleList.Sample = new double[25000];
+
+                    pointindex = System.IO.Path.GetFileNameWithoutExtension(directoryEntries[j]); //Получаем имя файла в папке выборки без расширения                    
+
+                    try //Ловим отсутствие Map.dat
+                    {
+                        using (StreamReader fs = new StreamReader(getPath() + "Map_" + pathtoindex + ".dat", System.Text.Encoding.Default))
+                        {
+                            string line = null;
+
+                            while ((line = fs.ReadLine()) != null)
+                            {
+
+                                if (line.StartsWith(pointindex))
+                                {
+                                    objid = line = fs.ReadLine();                                                                       
+                                }                                                                
+                            }
+                        }
+
+                        Guid.TryParse(objid, out tempobjid);
+                        sampleList.ObjectID = tempobjid;
+                        sampleList.SampleID = Guid.NewGuid();
+                        sampleList.Name = directoryEntries[j];
+                        for (int g = 0; g < 25000; g++) sampleList.Sample[g] = value2[g];
+                        outList.Add(sampleList);
+                     }
+
+                    catch { maperror = true; }
+
+                   }
+                }           
+            
+
+
+
+            log += "///////// " + DateTime.Now + Environment.NewLine; //Пишем дату в лог
+            log += Environment.NewLine; 
+
+            if (maperror) MessageBox.Show("Файл " + getPath() + "Map_" + pathtoindex + ".dat" + " не найден!");
+            else
+            {   
+                if ( directoryEntries.Length - 1 < (maptostring.Length - 2)/2 ) MessageBox.Show("Маршрут пройден не полностью. Некоторые сигналы отсутствуют!");
+
+                try
+                {
+                    foreach (var s in outList)
+                    {
+                        saveToServer(s.SampleID, s.ObjectID, MeasureUnitID, SamplePeriod, date, DataType, s.Sample, Diagnos);
+
+                        //Пишем Export.log                                  
+                        log += "Файл: " + s.Name + Environment.NewLine;
+                        log += "SampleID: " + s.SampleID + Environment.NewLine;
+                        log += "ObjectID: " + s.ObjectID + Environment.NewLine;
+                        log += "MeasureUnitID: " + MeasureUnitID + Environment.NewLine;
+                        log += "SamplePeriod: " + SamplePeriod + Environment.NewLine;
+                        log += "Date: " + date + Environment.NewLine;
+                        log += "DataType: " + DataType + Environment.NewLine;
+                        log += "Diagnos: " + Diagnos + Environment.NewLine;
+                        log += Environment.NewLine;
+                    }
+
+                    MessageBox.Show("Импорт завершен!");
+
+                    //Сохраняем Export.log  в папку с сигналами
+                    StreamWriter sw1 = new StreamWriter(new FileStream(path + "Export_" + pathtoindexfull + ".log", FileMode.Create, FileAccess.Write), Encoding.Default);
+                    sw1.Write(log);
+                    sw1.Close();
+
+                    //Сохраняем общий Export.log  в корень
+                    //StreamWriter sw2 = new StreamWriter(new FileStream(getPath() + "Export.log", FileMode.Append, FileAccess.Write), Encoding.Default);
+                    //sw2.Write(log);
+                    //sw2.Close();
+                }
+
+                catch { MessageBox.Show("Отсутствует связь с сервером!"); }
+            }           
+
+            return outList;
+        }
+
+
+
+        public static void saveToServer(Guid SampleID, Guid ObjectID, Guid MeasureUnitID, int SamplePeriod, DateTime Date, int DataType, double[] Values, string Diagnos)
+        {
+
+            // Double To Byte 
+
+            Byte[] predbyte = new Byte[8];
+            Byte[] byteresult = new Byte[Values.Length * 8];
+
+            //for (int i = 0; i < Values.Length; i++)
+            //{
+            //    predbyte = BitConverter.GetBytes(Values[i]);
+
+            //    for (int y = 0; y < 8; y++)
+            //    {
+            //        byteresult[i * y] = predbyte[y];
+            //    }
+
+            //}
+
+
+            for (int i = 0; i < Values.Length; i++)
+            {
+                predbyte = BitConverter.GetBytes(Values[i]);
+                Array.Copy(predbyte, 0, byteresult, i * 8, 8);
+            }
+
+            try
+            {
+                string connetionString = "Data Source=192.168.5.140; Initial Catalog=VS; User ID=sa; Password=123";
+                //string connetionString = "Data Source=192.168.0.234; Initial Catalog=VS; User ID=sa; Password=flvby_ctnb";
+
+                using (SqlConnection cn = new SqlConnection(connetionString))
+                using (SqlCommand cm = cn.CreateCommand())
+                {
+
+                    cm.Parameters.AddWithValue("@SampleID", SampleID);
+                    cm.Parameters.AddWithValue("@ObjectID", ObjectID);
+                    cm.Parameters.AddWithValue("@MeasureUnitID", MeasureUnitID);
+                    cm.Parameters.AddWithValue("@SamplePeriod", SamplePeriod);
+                    cm.Parameters.AddWithValue("@Date", Date);
+                    cm.Parameters.AddWithValue("@DataType", DataType);
+                    cm.Parameters.AddWithValue("@Values", byteresult);
+                    cm.Parameters.AddWithValue("@Diagnos", Diagnos);
+
+                    cm.CommandText = "INSERT INTO [Samples] (SampleID, ObjectID, MeasureUnitID, SamplePeriod, [Date], DataType, [Values], Diagnos) VALUES (@SampleID, @ObjectID, @MeasureUnitID, @SamplePeriod, @Date, @DataType, @Values, @Diagnos)";
+                    //cm.CommandText = "INSERT INTO [VS].[dbo].[MeasureUnits] (ID, Name, Symbol, QuantityID) VALUES (@ID, 'Метр в секунду за секунду', 'м/с2', @ID)";
+
+                    cn.Open();
+
+                    cm.ExecuteNonQuery();
+
+                }
+            }
+
+            catch { }
+        }
+
+
+
+
+        
+
+        private void TextBox_TextChanged_1(object sender, TextChangedEventArgs e)
+        {
+
+        }
+
+        //Импорт выборки
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {      
+            importSample(listboxPath);            
+        }
+
+        //Экспорт маршрута
+        private void Button_Click_1(object sender, RoutedEventArgs e)
+        {
+            if (globalPoints.Count > 0) saveRoad(globalPoints); //Если маршрут не пустой, то пишем                       
+            //textBox1.Text = null;
+            //globalPoints.Clear();
+        }
+
+       //Очистить
+        private void Button_Click_2(object sender, RoutedEventArgs e)
+        {
+            textBox1.Text = null;
+            globalPoints.Clear();
+        }
+
+        //Обновить окно выборки
+        private void Button_Click_3(object sender, RoutedEventArgs e)
+        {
+            List<SampleList> sample = new List<SampleList>();
+
+            sample.Clear();
+            listBox1.Items.Clear();
+
+            try
+            {
+                sample = refreshSample();
+
+                foreach (var s in sample) listBox1.Items.Add(s.Path + "\\" + s.Date);
+            }
+            catch 
+            {
+                MessageBox.Show("Невозможно прочитать файлы выборки!");
+            }
+
+        }
+
+        private void ListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {            
+            try
+            {
+                listboxPath = listBox1.SelectedItem.ToString().Substring(0, 11);
+            }
+
+            catch { }
+        }
+   
+
+
+
+
+    }
+}
+
+
+
+/*Window dilog = new Window();
+dilog.ResizeMode = System.Windows.ResizeMode.NoResize;
+dilog.Height = 500;
+dilog.Width = 300;
+dilog.WindowStartupLocation = System.Windows.WindowStartupLocation.CenterScreen;
+TextBox n1 = new TextBox();
+dilog.Content = n1;
+foreach (var s in outList) n1.Text += Convert.ToString(s.ObjectID + Environment.NewLine);
+//for (int g = 0; g < 25; g++) n1.Text += s.Sample[g] + Environment.NewLine;
+//for (int g = 0; g < 25000; g++) n1.Text += outList.Sample[g];
+dilog.Show();*/

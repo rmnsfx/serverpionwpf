@@ -1,0 +1,306 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Navigation;
+using System.Windows.Shapes;
+using System.Data.SqlClient;
+using System.Data;
+
+namespace ServerPionWPF
+{
+    /// <summary>
+    /// Логика взаимодействия для MainWindow.xaml
+    /// </summary>
+    public partial class MainWindow : Window
+    {
+        public MainWindow()
+        {
+            InitializeComponent();
+
+            Guid gRoot = new Guid("00000000-0000-0000-0000-000000000000");            
+
+            List<Objects> objdata = new List<Objects>();
+            objdata = LoadDB();
+
+            //TreeViewItem treeItem = new TreeViewItem() { Header = "Объекты" };
+            
+            TreeViewItem treeItem = null;
+
+            PopulateTree(treeItem, objdata);
+
+            
+
+
+            
+
+           
+
+            /*foreach (Objects o1 in objdata)
+            {
+
+                TreeViewItem treeItem2 = new TreeViewItem() { Header = o1.Name.ToString() };
+
+
+                if (o1.ParentID.Equals(root))
+                {
+                    treeItem.Items.Add(treeItem2);
+
+                    foreach (Objects o2 in objdata)
+                    {
+                        if (o2.ParentID.Equals(o1.ObjectID))
+                        {
+                            TreeViewItem treeItem3 = new TreeViewItem() { Header = o2.Name.ToString() };
+                            treeItem2.Items.Add(treeItem3);
+
+                            foreach (Objects o3 in objdata)
+                            {
+                                if (o3.ParentID.Equals(o2.ObjectID))
+                                {
+                                    TreeViewItem treeItem4 = new TreeViewItem() { Header = o3.Name.ToString() };
+                                    treeItem3.Items.Add(treeItem4);                                   
+
+                                }
+
+
+                            }
+                        }
+                    }
+
+                }   
+         
+            }*/
+
+            //ObjTree.Items.Add(treeItem);
+
+
+
+            
+
+
+            
+        }
+
+
+        ///////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+        public void PopulateTree(TreeViewItem root, List<Objects> objdata)
+        {
+            Guid gRoot = new Guid("00000000-0000-0000-0000-000000000000");
+            //Guid g = new Guid("31F33EF7-D17A-4800-BDAB-EA05022AAD29");
+            //Guid g = new Guid();
+            //string s = null;
+
+            if (root == null)
+            {
+                root = new TreeViewItem();
+                root.Header = "Объекты";
+                root.Tag = null;
+                                
+                var details = objdata.Where(t => t.ParentID.Equals(gRoot));
+
+                foreach (var detail in details)
+                {
+                    var child = new TreeViewItem()
+                    {
+                         Header = detail.Name.ToString(),
+                         Tag = detail.ObjectID.ToString()
+                    };
+
+                    
+
+                    //MessageBox.Show (Convert.ToString(root.Tag));
+                    
+                    root.Items.Add(child);
+                    PopulateTree(child, objdata);            
+                    
+                    
+                }
+
+                //ObjTree.Items.Add(root);
+            }
+            
+            else
+            {
+                //MessageBox.Show (Convert.ToString(root.Tag));
+
+                var details = objdata;
+
+                //var details = objdata.Where(t => t.ParentID.Equals(root.Tag));
+
+                foreach (var detail in details)
+                {
+                    /*var child = new TreeViewItem()
+                    {
+                        Header = detail.Name.ToString()
+                    };
+
+                    PopulateTree(child, objdata);
+                    root.Items.Add(child);*/
+
+                    //MessageBox.Show(Convert.ToString(detail.Name));
+                    //MessageBox.Show(Convert.ToString(root.Tag));
+                    //MessageBox.Show(Convert.ToString(root.Name));
+                }
+
+                ObjTree.Items.Add(root);
+            }
+
+                      
+            
+        }
+
+
+
+        ///////////////////////////////////////////////////////////////////////////////////////////////
+
+        /*private void AddChildren(TreeNode treeNode, List<dynamic> child)
+        {
+            var newchild = (from node in child where node.Parent == treeNode.Text select node).ToList();
+            foreach (var item in newchild)
+            {
+                TreeNode newNode = new TreeNode(item.Name);
+                treeNode.Nodes.Add(newNode);
+                AddChildren(newNode, child);
+            }
+        }*/
+
+
+        ///////////////////////////////////////////////////////////////////////////////////////////////
+
+        private void BindTree(IEnumerable<Objects> list, TreeViewItem parentNode)
+        {
+
+            Guid gRoot = new Guid("00000000-0000-0000-0000-000000000000");
+
+            var nodes = list.Where(x => parentNode == null); //? x.ParentID.Equals(gRoot) : x.ParentID == int.Parse(parentNode.Value)
+            
+            foreach (var node in nodes)
+            {
+                TreeViewItem newNode = new TreeViewItem() { Header = node.Name.ToString() };
+
+                if (parentNode == null)
+                {
+                    ObjTree.Items.Add(newNode);
+                }
+                else
+                {
+                     ObjTree.Items.Add(newNode);
+                }
+                BindTree(list, newNode);
+            }
+        }
+
+
+       
+
+        ///////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+        public class Objects
+        {
+            public Guid ObjectID { get; set; }
+            public String Name { get; set; }
+            public Guid ParentID { get; set; }
+        }
+
+
+        public static List<Objects> LoadDB()
+        {
+            List<Objects> objdata = new List<Objects>();                     
+
+          
+            string connetionString = "Data Source=192.168.5.140; Initial Catalog=VS; User ID=sa; Password=123";
+            
+            SqlConnection connection = new SqlConnection(connetionString);
+            connection.Open();
+            SqlCommand command = new SqlCommand("SELECT * FROM [Objects]", connection);
+            SqlDataReader dataReader = command.ExecuteReader();
+                       
+            
+            while (dataReader.Read())
+            {
+                Objects f = new Objects();
+
+                f.ObjectID = (Guid)dataReader["ObjectID"];
+                f.Name = (String)dataReader["Name"];
+                f.ParentID = (Guid)dataReader["ParentID"];
+
+                objdata.Add(f);
+            }
+
+            connection.Close();
+
+            return objdata;            
+        }
+
+       
+        public static void LoadDb2 ()
+        {
+
+            DataTable dataTable = new DataTable();
+
+            SqlConnection conn = new SqlConnection(@"Data Source=192.168.5.140; Initial Catalog=VS; User ID=sa; Password=123");
+            SqlCommand cmd = new SqlCommand("select * from Objects", conn);
+            SqlDataReader data;
+
+            conn.Open();
+            data = cmd.ExecuteReader();
+
+            dataTable.Load(data);
+
+            /*while (data.Read())
+            {
+                objects.Add(data.GetOrdinal());
+                    
+            }*/
+            data.Close();
+
+
+
+            // Example 1 - Print your  Column Headers
+            String columns = string.Empty;
+            foreach (DataColumn column in dataTable.Columns)
+            {
+                columns += column.ColumnName + " | ";
+            }
+
+            //text1.Text = Convert.ToString(columns);
+
+
+
+            // Example 2 - Print the first 10 row of data
+            int topRows = 10;
+            for (int i = 0; i < topRows; i++)
+            {
+                String rowText = string.Empty;
+                foreach (DataColumn column in dataTable.Columns)
+                {
+                    rowText += dataTable.Rows[i][column.ColumnName] + " | ";
+                }
+                //text1.Text += Convert.ToString(rowText);
+            }
+
+
+            //dataGrid.ItemsSource = dataTable.AsDataView();
+                
+
+        }
+
+        private void TextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+
+        }
+    }
+}
